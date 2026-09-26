@@ -5,6 +5,34 @@ import shutil
 from block_markdown import extract_title, markdown_to_html_node
 
 
+def generate_pages_recursive(
+    dir_path_content: str, template_path: str, dest_dir_path: str
+) -> None:
+    """Recursively crawls the entire content folder, automatically compiling every
+
+    markdown (.md) file it discovers into a matching HTML file structure.
+    """
+    # 1. Grab a clean list of all items inside the current content folder
+    items = os.listdir(dir_path_content)
+
+    for item in items:
+        src_path = os.path.join(dir_path_content, item)
+
+        # Case A: If it's a subfolder, use recursion to dive deeper into the rabbit hole!
+        if os.path.isdir(src_path):
+            new_dest_dir = os.path.join(dest_dir_path, item)
+            generate_pages_recursive(src_path, template_path, new_dest_dir)
+
+        # Case B: If it's a file AND it ends in '.md', compile it!
+        elif os.path.isfile(src_path) and item.endswith(".md"):
+            # Calculate the destination path name (swap .md out for a clean .html wrapper)
+            html_filename = item.replace(".md", ".html")
+            dest_file_path = os.path.join(dest_dir_path, html_filename)
+
+            # Fire off our single page generator tool to write it to disk!
+            generate_page(src_path, template_path, dest_file_path)
+
+
 def copy_directory_recursive(source_dir: str, dest_dir: str) -> None:
     """Recursively walks through a source directory and copies every single
 
@@ -78,10 +106,10 @@ def main():
     print("🚀 Initiating recursive static assets transfer...")
     copy_directory_recursive(source_folder, destination_folder)
 
-    # NEW COMPILER TRIGGERS: Compile our content folder targets straight into our output directory!
-    print("🎨 Launching site compilation sequence...")
-    generate_page("content/index.md", "template.html", "public/index.html")
-    print("🎉 All pages successfully generated and published!")
+    # FIX: Swap out the single hardcoded file trigger for the dynamic directory crawler!
+    print("🎨 Launching recursive multi-page compilation sequence...")
+    generate_pages_recursive("content", "template.html", "public")
+    print("🎉 All directory pages successfully generated and published!")
 
 
 if __name__ == "__main__":
